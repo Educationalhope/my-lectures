@@ -448,8 +448,8 @@
       const base64Data = await base64Promise;
       const mimeType = fileOrBlob.type || 'audio/mp4';
 
-      // تم تصحيح رابط الـ Endpoint هنا ليكون متوافقاً مع الإصدار المعتمد للـ API
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      // استخدام الموديل المتوافق تماماً مع الاستدعاء المباشر للإصدارات المستقرة
+      const endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
       const promptText = `أنت أستاذ ومساعد دراسي ذكي ومحترف. استمع بعناية فائقة للملف الصوتي المرفق لمادة [${title}]، وقم بتقديم تلخيص شامل وكامل يدون كل التفاصيل والنقاط المهمة التي ذكرها المحاضر في التسجيل باللغة العربية:
 
