@@ -103,13 +103,14 @@
       padding: 20px;
       margin-bottom: 15px;
       transition: 0.2s;
+      position: relative;
     }
 
     .lecture-card:hover {
       border-color: var(--primary-color);
     }
 
-    .form-control {
+    .form-control, .form-select {
       background-color: #0f172a;
       border: 1px solid #334155;
       color: var(--text-color);
@@ -117,7 +118,7 @@
       padding: 12px;
     }
 
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
       background-color: #0f172a;
       color: var(--text-color);
       border-color: var(--primary-color);
@@ -136,6 +137,13 @@
       color: #38bdf8;
       background: transparent;
       border-bottom: 2px solid #38bdf8;
+    }
+
+    audio {
+      width: 100%;
+      height: 38px;
+      border-radius: 8px;
+      margin-top: 10px;
     }
 
     footer {
@@ -198,9 +206,17 @@
         <input type="email" id="email" class="form-control" placeholder="example@gmail.com">
       </div>
 
-      <div class="mb-4">
+      <div class="mb-3">
         <label class="form-label text-secondary">اسم المادة / عنوان المحاضرة</label>
         <input type="text" id="lectureTitle" class="form-control" placeholder="مثال: أحياء - الفصل الثالث (الوراثة)">
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label text-secondary">نوع التلخيص المطلوب</label>
+        <select id="summaryType" class="form-select">
+          <option value="standard">⚡ تلخيص سريع (نقاط مركزة + أسئلة)</option>
+          <option value="detailed">📚 تلخيص شامل (تفصيلي مع الشرح والتعاريف)</option>
+        </select>
       </div>
 
       <!-- قسم التسجيل المباشر -->
@@ -232,12 +248,18 @@
       </div>
     </div>
 
-    <!-- كارت الأرشيف -->
+    <!-- كارت الأرشيف مع شريط البحث -->
     <div class="main-card">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold m-0"><i class="fa-solid fa-box-archive text-warning me-2"></i> أرشيف المحاضرات المحفوظة</h4>
         <button id="refreshBtn" type="button" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-rotate-right me-1"></i> تحديث</button>
       </div>
+
+      <!-- مربع البحث المباشر -->
+      <div class="mb-3">
+        <input type="text" id="searchInput" onkeyup="filterLectures()" class="form-control" placeholder="🔍 بحث عن محاضرة أو مادة محفوظة...">
+      </div>
+
       <div id="lecturesList">
         <p class="text-muted text-center py-3">لا توجد محاضرات محفوظة حتى الآن.</p>
       </div>
@@ -255,8 +277,8 @@
     let mediaRecorder;
     let audioChunks = [];
     let selectedAudioFile = null;
+    let recordingStartTime = 0;
 
-    // التنقل المباشر والسريع بين التبويبات باللمس
     function switchTab(tabName) {
       const recordTab = document.getElementById('record-tab');
       const uploadTab = document.getElementById('upload-tab');
@@ -289,7 +311,7 @@
     audioFileInput.onchange = (e) => {
       if (e.target.files && e.target.files[0]) {
         selectedAudioFile = e.target.files[0];
-        fileLabel.innerHTML = `<strong class="text-success"><i class="fa-solid fa-file-audio me-1"></i> تم اختيار: ${selectedAudioFile.name}</strong>`;
+        fileLabel.innerHTML = '<strong class="text-success"><i class="fa-solid fa-file-audio me-1"></i> تم اختيار: ' + selectedAudioFile.name + '</strong>';
         processUploadedBtn.disabled = false;
       }
     };
@@ -310,10 +332,12 @@
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري قراءة الملف الصوتي وتلخيصه...';
 
+      const audioUrl = URL.createObjectURL(selectedAudioFile);
+
       setTimeout(function() {
         const summaryText = "• الملاحظة الرئيسية: تم تحليل الملف الصوتي المرفوع واستخراج النقاط الوراثية.\n• التعريفات المهمة: شرح قانون مندل الأول والثاني.\n• أسئلة متوقعة: أسئلة المسائل الوراثية من نهاية المادة.";
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تلخيص الملف وحفظه بنجاح!';
-        addLectureToUI(title + " (ملف مرفوع)", summaryText);
+        addLectureToUI(title + " (ملف مرفوع)", summaryText, audioUrl);
         document.getElementById('lectureTitle').value = "";
         selectedAudioFile = null;
         fileLabel.innerText = "اضغط هنا لاختيار ملف صوتي (MP3, M4A, WAV...)";
@@ -334,6 +358,12 @@
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-warning me-1"></i> جاري طلب إذن الميكروفون...';
 
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> المتصفح لا يدعم الميكروفون';
+        alert("المتصفح الحالي لا يدعم تسجيل الصوت بشكل مباشر، يرجى فتح الموقع في متصفح Safari أو Chrome الأصلي.");
+        return;
+      }
+
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(function(stream) {
           try {
@@ -343,6 +373,7 @@
           }
 
           audioChunks = [];
+          recordingStartTime = Date.now();
 
           mediaRecorder.ondataavailable = function(event) {
             if (event.data && event.data.size > 0) {
@@ -376,7 +407,18 @@
     };
 
     function processAudioAndSave() {
+      const duration = (Date.now() - recordingStartTime) / 1000;
+
+      if (duration < 3 || audioChunks.length === 0) {
+        status.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> التسجيل قصير جداً أو فارغ';
+        alert("التسجيل قصير جداً أو لم يحتوي على صوت! يرجى التحدث لمدة كافية لتلخيص المحاضرة.");
+        return;
+      }
+
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري معالجة الصوت وتلخيص المحاضرة...';
+
+      const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
+      const audioUrl = URL.createObjectURL(audioBlob);
 
       const summaryText = "• الملاحظة الرئيسية: تم التركيز على القانون الأول وشرح المفهوم الأساسي.\n• التعريفات المهمة: مصطلح الفصل الأول تم توضيحه بالكامل.\n• أسئلة متوقعة: سؤال الامتحان الأسبوعي في الصفحة 12.";
 
@@ -384,22 +426,101 @@
       
       setTimeout(function() {
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم حفظ المحاضرة والتلاخيص بنجاح!';
-        addLectureToUI(title, summaryText);
+        addLectureToUI(title, summaryText, audioUrl);
         document.getElementById('lectureTitle').value = "";
       }, 1500);
     }
 
-    function addLectureToUI(title, summary) {
+    function addLectureToUI(title, summary, audioSrc) {
       const list = document.getElementById('lecturesList');
       if (list.querySelector('p')) list.innerHTML = "";
 
+      const cardId = 'card-' + Date.now();
       const card = document.createElement('div');
       card.className = 'lecture-card';
+      card.id = cardId;
+
+      const audioHTML = audioSrc ? `<audio controls src="${audioSrc}" class="mt-2"></audio>` : '';
+
       card.innerHTML = `
-        <h5 class="fw-bold text-primary mb-2"><i class="fa-solid fa-book-bookmark me-2"></i>${title}</h5>
-        <div class="text-light small" style="white-space: pre-line; line-height: 1.7;">${summary}</div>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="fw-bold text-primary m-0 lecture-title-text"><i class="fa-solid fa-book-bookmark me-2"></i>${title}</h5>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-info" onclick="copyLecture('${cardId}')" title="نسخ"><i class="fa-solid fa-copy"></i></button>
+            <button class="btn btn-sm btn-outline-success" onclick="downloadTXT('${cardId}')" title="تنزيل TXT"><i class="fa-solid fa-download"></i></button>
+            <button class="btn btn-sm btn-outline-warning" onclick="editLecture('${cardId}')" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteLecture('${cardId}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="text-light small lecture-summary-text" style="white-space: pre-line; line-height: 1.7;">${summary}</div>
+        ${audioHTML}
       `;
       list.prepend(card);
+    }
+
+    function deleteLecture(cardId) {
+      if (confirm("هل أنت تأكد من إزالة هذه المحاضرة من الأرشيف؟")) {
+        const card = document.getElementById(cardId);
+        if (card) card.remove();
+        
+        const list = document.getElementById('lecturesList');
+        if (list.children.length === 0) {
+          list.innerHTML = '<p class="text-muted text-center py-3">لا توجد محاضرات محفوظة حتى الآن.</p>';
+        }
+      }
+    }
+
+    function editLecture(cardId) {
+      const card = document.getElementById(cardId);
+      const titleElem = card.querySelector('.lecture-title-text');
+      const summaryElem = card.querySelector('.lecture-summary-text');
+
+      const currentTitle = titleElem.innerText.replace(/^.*?  /, '');
+      const currentSummary = summaryElem.innerText;
+
+      const newTitle = prompt("تعديل عنوان المحاضرة:", currentTitle);
+      if (newTitle === null) return;
+
+      const newSummary = prompt("تعديل ملخص المحاضرة:", currentSummary);
+      if (newSummary === null) return;
+
+      titleElem.innerHTML = '<i class="fa-solid fa-book-bookmark me-2"></i>' + newTitle;
+      summaryElem.innerText = newSummary;
+    }
+
+    function copyLecture(cardId) {
+      const card = document.getElementById(cardId);
+      const title = card.querySelector('.lecture-title-text').innerText;
+      const summary = card.querySelector('.lecture-summary-text').innerText;
+
+      const fullText = title + "\n\n" + summary + "\n\nتم التلخيص بواسطة: LecNote AI - مؤمل نزار";
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert("تم نسخ التلخيص بنجاح إلى الحافظة!");
+      });
+    }
+
+    function downloadTXT(cardId) {
+      const card = document.getElementById(cardId);
+      const title = card.querySelector('.lecture-title-text').innerText;
+      const summary = card.querySelector('.lecture-summary-text').innerText;
+
+      const content = title + "\n" + "=".repeat(30) + "\n\n" + summary + "\n\n" + "=".repeat(30) + "\nفكرة وتنفيذ الطالب: مؤمل نزار | Telegram: @moamel_nazar";
+      
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = title.replace(/[^\w\s-]/gi, '') + '_ملخص.txt';
+      a.click();
+    }
+
+    function filterLectures() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.getElementsByClassName('lecture-card');
+
+      for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText.toLowerCase();
+        cards[i].style.display = text.includes(input) ? 'block' : 'none';
+      }
     }
   </script>
 </body>
