@@ -451,7 +451,11 @@
       const base64Data = await base64Promise;
       const mimeType = fileOrBlob.type || 'audio/mp4';
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const modelsToTry = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
+      ];
 
       const promptText = `أنت أستاذ ومساعد دراسي ذكي ومحترف. استمع بعناية فائقة للملف الصوتي المرفق لمادة [${title}]، وقم بتقديم تلخيص شامل وكامل يدون كل التفاصيل والنقاط المهمة التي ذكرها المحاضر في التسجيل باللغة العربية:
 
@@ -476,23 +480,32 @@
         }]
       };
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
+      let lastError = null;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error ? errorData.error.message : 'فشل الاتصال بالخادم، تأكد من صحة المفتاح');
+      for (const model of modelsToTry) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.candidates && data.candidates[0].content) {
+              return data.candidates[0].content.parts[0].text;
+            }
+          } else {
+            const errorData = await response.json();
+            lastError = errorData.error ? errorData.error.message : 'فشل طلب الموديل ' + model;
+          }
+        } catch (err) {
+          lastError = err.message;
+        }
       }
 
-      const data = await response.json();
-      if (!data.candidates || !data.candidates[0].content) {
-        throw new Error('لم يتم التوصل لاستجابة واضحة من الذكاء الاصطناعي');
-      }
-
-      return data.candidates[0].content.parts[0].text;
+      throw new Error(lastError || 'فشل الاتصال بالذكاء الاصطناعي، يرجى إعادة المحاولة');
     }
 
     function addLectureToUI(title, summary, audioSrc) {
