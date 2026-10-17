@@ -265,7 +265,18 @@
     </div>
   </footer>
 
-  <script>
+  <!-- استدعاء مكتبة Google Gen AI الرسمية لتجاوز مشاكل المتصفح وCORS نهائياً -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.run/@google/genai"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { GoogleGenAI } from "@google/genai";
+
     function getEmbeddedKey() {
       const _k1 = "AQ.Ab8RN6Jj8JxU";
       const _k2 = "vwS2bnCTVgs1e7W";
@@ -273,12 +284,15 @@
       return _k1 + _k2 + _k3;
     }
 
+    // تهيئة العميل باستخدام المكتبة الرسمية
+    const ai = new GoogleGenAI({ apiKey: getEmbeddedKey() });
+
     let mediaRecorder;
     let audioChunks = [];
     let selectedAudioFile = null;
     let recordingStartTime = 0;
 
-    function switchTab(tabName) {
+    window.switchTab = function(tabName) {
       const recordTab = document.getElementById('record-tab');
       const uploadTab = document.getElementById('upload-tab');
       const recordPanel = document.getElementById('record-panel');
@@ -295,7 +309,7 @@
         uploadPanel.style.display = 'block';
         recordPanel.style.display = 'none';
       }
-    }
+    };
 
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -318,7 +332,6 @@
     processUploadedBtn.onclick = async function() {
       const email = document.getElementById('email').value.trim();
       const title = document.getElementById('lectureTitle').value.trim();
-      const apiKey = getEmbeddedKey();
 
       if (!email || !title) {
         alert("يرجى إدخال البريد الإلكتروني وعنوان المحاضرة أولاً!");
@@ -334,7 +347,7 @@
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري استماع وتلخيص كافة التفاصيل بالذكاء الاصطناعي...';
       try {
-        const summaryText = await summarizeAudioWithGemini(selectedAudioFile, apiKey, title);
+        const summaryText = await summarizeAudioWithGemini(selectedAudioFile, title);
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تحليل وتلخيص الصوت الفعلي كاملاً!';
         addLectureToUI(title + " (ملف مرفوع)", summaryText, audioUrl);
       } catch (err) {
@@ -424,10 +437,9 @@
       const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
       const audioUrl = URL.createObjectURL(audioBlob);
       const title = document.getElementById('lectureTitle').value;
-      const apiKey = getEmbeddedKey();
 
       try {
-        const summaryText = await summarizeAudioWithGemini(audioBlob, apiKey, title);
+        const summaryText = await summarizeAudioWithGemini(audioBlob, title);
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تحليل وتلخيص كافة نقاط التسجيل بنجاح!';
         addLectureToUI(title, summaryText, audioUrl);
       } catch (err) {
@@ -438,7 +450,7 @@
       document.getElementById('lectureTitle').value = "";
     }
 
-    async function summarizeAudioWithGemini(fileOrBlob, apiKey, title) {
+    async function summarizeAudioWithGemini(fileOrBlob, title) {
       const reader = new FileReader();
       const base64Promise = new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -447,9 +459,6 @@
 
       const base64Data = await base64Promise;
       const mimeType = fileOrBlob.type || 'audio/mp4';
-
-      // استخدام الموديل المتوافق تماماً مع الاستدعاء المباشر للإصدارات المستقرة
-      const endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
       const promptText = `أنت أستاذ ومساعد دراسي ذكي ومحترف. استمع بعناية فائقة للملف الصوتي المرفق لمادة [${title}]، وقم بتقديم تلخيص شامل وكامل يدون كل التفاصيل والنقاط المهمة التي ذكرها المحاضر في التسجيل باللغة العربية:
 
@@ -460,40 +469,24 @@
 
 يرجى عدم اختصار الشرح بشكل مخل، واستخراج كافة التفاصيل الصوتية بدقة لخدمة الطالب.`;
 
-      const requestBody = {
-        contents: [{
-          parts: [
-            { text: promptText },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Data
-              }
+    // استخدام المكتبة الرسمية للتعامل مع الموديل مباشرة وبدون مشاكل CORS
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [
+          promptText,
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: base64Data
             }
-          ]
-        }]
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+          }
+        ]
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error ? errorData.error.message : 'فشل الاتصال بالخادم');
-      }
-
-      const data = await response.json();
-      if (!data.candidates || !data.candidates[0].content) {
-        throw new Error('لم يتم التوصل لاستجابة من الذكاء الاصطناعي');
-      }
-
-      return data.candidates[0].content.parts[0].text;
+      return response.text;
     }
 
-    function addLectureToUI(title, summary, audioSrc) {
+    window.addLectureToUI = function(title, summary, audioSrc) {
       const list = document.getElementById('lecturesList');
       if (list.querySelector('p')) list.innerHTML = "";
 
@@ -518,9 +511,9 @@
         ${audioHTML}
       `;
       list.prepend(card);
-    }
+    };
 
-    function deleteLecture(cardId) {
+    window.deleteLecture = function(cardId) {
       if (confirm("هل أنت تأكد من إزالة هذه المحاضرة من الأرشيف؟")) {
         const card = document.getElementById(cardId);
         if (card) card.remove();
@@ -530,9 +523,9 @@
           list.innerHTML = '<p class="text-muted text-center py-3">لا توجد محاضرات محفوظة حتى الآن.</p>';
         }
       }
-    }
+    };
 
-    function editLecture(cardId) {
+    window.editLecture = function(cardId) {
       const card = document.getElementById(cardId);
       const titleElem = card.querySelector('.lecture-title-text');
       const summaryElem = card.querySelector('.lecture-summary-text');
@@ -548,9 +541,9 @@
 
       titleElem.innerHTML = '<i class="fa-solid fa-book-bookmark me-2"></i>' + newTitle;
       summaryElem.innerText = newSummary;
-    }
+    };
 
-    function copyLecture(cardId) {
+    window.copyLecture = function(cardId) {
       const card = document.getElementById(cardId);
       const title = card.querySelector('.lecture-title-text').innerText;
       const summary = card.querySelector('.lecture-summary-text').innerText;
@@ -559,9 +552,9 @@
       navigator.clipboard.writeText(fullText).then(() => {
         alert("تم نسخ التلخيص بنجاح إلى الحافظة!");
       });
-    }
+    };
 
-    function downloadTXT(cardId) {
+    window.downloadTXT = function(cardId) {
       const card = document.getElementById(cardId);
       const title = card.querySelector('.lecture-title-text').innerText;
       const summary = card.querySelector('.lecture-summary-text').innerText;
@@ -569,13 +562,21 @@
       const content = title + "\n" + "=".repeat(30) + "\n\n" + summary + "\n\n" + "=".repeat(30) + "\nفكرة وتنفيذ الطالب: مؤمل نزار | Telegram: @moamel_nazar";
       
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    
+      // حل متوافق تماماً مع الهواتف الذكية للتنزيل
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = url;
       a.download = title.replace(/[^\w\s-]/gi, '') + '_ملخص.txt';
+      document.body.appendChild(a);
       a.click();
-    }
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
+    };
 
-    function filterLectures() {
+    window.filterLectures = function() {
       const input = document.getElementById('searchInput').value.toLowerCase();
       const cards = document.getElementsByClassName('lecture-card');
 
@@ -583,7 +584,7 @@
         const text = cards[i].innerText.toLowerCase();
         cards[i].style.display = text.includes(input) ? 'block' : 'none';
       }
-    }
+    };
   </script>
 </body>
 </html>
