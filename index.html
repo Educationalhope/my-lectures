@@ -439,7 +439,6 @@
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تحليل وتلخيص كافة نقاط التسجيل بنجاح!';
         addLectureToUI(title, summaryText, audioUrl);
       } catch (err) {
-        // كتابة سبب الخطأ الدقيق مباشرة على الشاشة
         status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> ' + err.message;
         alert("تنبيه: " + err.message);
       }
@@ -474,7 +473,6 @@
 
 يرجى عدم اختصار الشرح بشكل مخل، واستخراج كافة التفاصيل الصوتية بدقة لخدمة الطالب.`;
 
-      // إرسال الطلب إلى سيرفر Cloudflare
       const res = await fetch(PROXY_SERVER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -504,7 +502,6 @@
         return json.candidates[0].content.parts[0].text;
       }
 
-      // في حال كان سيرفر Cloudflare لا يزال يشغل كود Hello World القديم
       if (json.message) {
         throw new Error("سيرفر Cloudflare يحتاج ضغط زر Deploy الأزرق: " + json.message);
       }
