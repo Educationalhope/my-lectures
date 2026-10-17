@@ -265,32 +265,15 @@
     </div>
   </footer>
 
-  <!-- استدعاء مكتبة Google Gen AI الرسمية لتجاوز مشاكل المتصفح وCORS نهائياً -->
-  <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://esm.run/@google/genai"
-      }
-    }
-  </script>
-
-  <script type="module">
-    import { GoogleGenAI } from "@google/genai";
-
-    function getEmbeddedKey() {
-      const _k1 = "AQ.Ab8RN6Jj8JxU";
-      const _k2 = "vwS2bnCTVgs1e7W";
-      const _k3 = "pmfwCCCOlzU5Nqob92lNxEQ";
-      return _k1 + _k2 + _k3;
-    }
-
-    // تهيئة العميل باستخدام المكتبة الرسمية
-    const ai = new GoogleGenAI({ apiKey: getEmbeddedKey() });
+  <script>
+    // رابط السيرفر الوسيط الخاص بك على Cloudflare
+    const PROXY_SERVER_URL = "https://fancy-dream-56cf.mmoml6638.workers.dev";
 
     let mediaRecorder;
     let audioChunks = [];
     let selectedAudioFile = null;
     let recordingStartTime = 0;
+    let recorderMimeType = "audio/webm";
 
     window.switchTab = function(tabName) {
       const recordTab = document.getElementById('record-tab');
@@ -383,13 +366,22 @@
 
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(function(stream) {
-          try {
-            mediaRecorder = new MediaRecorder(stream);
-          } catch (err) {
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
+          audioChunks = [];
+          
+          if (MediaRecorder.isTypeSupported('audio/webm')) {
+            recorderMimeType = 'audio/webm';
+          } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            recorderMimeType = 'audio/mp4';
+          } else {
+            recorderMimeType = '';
           }
 
-          audioChunks = [];
+          try {
+            mediaRecorder = recorderMimeType ? new MediaRecorder(stream, { mimeType: recorderMimeType }) : new MediaRecorder(stream);
+          } catch (err) {
+            mediaRecorder = new MediaRecorder(stream);
+          }
+
           recordingStartTime = Date.now();
 
           mediaRecorder.ondataavailable = function(event) {
@@ -434,7 +426,8 @@
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري استماع وتلخيص الصوت بكامل تفاصيله...';
 
-      const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
+      const finalType = mediaRecorder.mimeType || recorderMimeType || 'audio/webm';
+      const audioBlob = new Blob(audioChunks, { type: finalType });
       const audioUrl = URL.createObjectURL(audioBlob);
       const title = document.getElementById('lectureTitle').value;
 
@@ -452,13 +445,21 @@
 
     async function summarizeAudioWithGemini(fileOrBlob, title) {
       const reader = new FileReader();
-      const base64Promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      const base64Promise = new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+          if (reader.result) {
+            resolve(reader.result.split(',')[1]);
+          } else {
+            reject(new Error("تعذر قراءة بيانات الملف الصوتي"));
+          }
+        };
+        reader.onerror = reject;
         reader.readAsDataURL(fileOrBlob);
       });
 
       const base64Data = await base64Promise;
-      const mimeType = fileOrBlob.type || 'audio/mp4';
+      let mimeType = fileOrBlob.type || 'audio/webm';
+      if (mimeType.includes(';')) mimeType = mimeType.split(';')[0];
 
       const promptText = `أنت أستاذ ومساعد دراسي ذكي ومحترف. استمع بعناية فائقة للملف الصوتي المرفق لمادة [${title}]، وقم بتقديم تلخيص شامل وكامل يدون كل التفاصيل والنقاط المهمة التي ذكرها المحاضر في التسجيل باللغة العربية:
 
@@ -469,21 +470,28 @@
 
 يرجى عدم اختصار الشرح بشكل مخل، واستخراج كافة التفاصيل الصوتية بدقة لخدمة الطالب.`;
 
-    // استخدام المكتبة الرسمية للتعامل مع الموديل مباشرة وبدون مشاكل CORS
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: [
-          promptText,
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data
-            }
-          }
-        ]
+      // الإرسال للسيرفر الوسيط Cloudflare
+      const res = await fetch(PROXY_SERVER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: promptText,
+          mimeType: mimeType,
+          audioBase64: base64Data
+        })
       });
 
-      return response.text;
+      const json = await res.json();
+
+      if (json.error) {
+        throw new Error(json.error.message || JSON.stringify(json.error));
+      }
+
+      if (json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts) {
+        return json.candidates[0].content.parts[0].text;
+      }
+
+      throw new Error("لم يتم استلام نص التلخيص بشكل صحيح من محرك الذكاء الاصطناعي.");
     }
 
     window.addLectureToUI = function(title, summary, audioSrc) {
@@ -514,7 +522,7 @@
     };
 
     window.deleteLecture = function(cardId) {
-      if (confirm("هل أنت تأكد من إزالة هذه المحاضرة من الأرشيف؟")) {
+      if (confirm("هل أنت متأكد من إزالة هذه المحاضرة من الأرشيف؟")) {
         const card = document.getElementById(cardId);
         if (card) card.remove();
         
@@ -563,7 +571,6 @@
       
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     
-      // حل متوافق تماماً مع الهواتف الذكية للتنزيل
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
