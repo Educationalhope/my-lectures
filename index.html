@@ -87,12 +87,15 @@
 
     .status-badge {
       font-size: 0.9rem;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 10px 18px;
+      border-radius: 12px;
       background: #334155;
       color: var(--text-muted);
       display: inline-block;
       margin-top: 15px;
+      word-break: break-word;
+      max-width: 100%;
+      line-height: 1.5;
     }
 
     .lecture-card {
@@ -236,7 +239,7 @@
         </button>
       </div>
 
-      <div class="text-center">
+      <div class="text-center mt-3">
         <span id="status" class="status-badge"><i class="fa-solid fa-circle-check text-success me-1"></i> الذكاء الاصطناعي مجهز ومستعد للتلخيص المباشر...</span>
       </div>
     </div>
@@ -266,7 +269,7 @@
   </footer>
 
   <script>
-    // رابط السيرفر الوسيط الخاص بك على Cloudflare
+    // رابط سيرفرك المباشر في Cloudflare
     const PROXY_SERVER_URL = "https://fancy-dream-56cf.mmoml6638.workers.dev";
 
     let mediaRecorder;
@@ -334,8 +337,8 @@
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تحليل وتلخيص الصوت الفعلي كاملاً!';
         addLectureToUI(title + " (ملف مرفوع)", summaryText, audioUrl);
       } catch (err) {
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> خطأ في معالجة الصوت';
-        alert("حدث خطأ أثناء الاتصال بمحرك الذكاء الاصطناعي: " + err.message);
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> ' + err.message;
+        alert("تنبيه: " + err.message);
         return;
       }
 
@@ -436,8 +439,9 @@
         status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم تحليل وتلخيص كافة نقاط التسجيل بنجاح!';
         addLectureToUI(title, summaryText, audioUrl);
       } catch (err) {
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> خطأ في التلخيص';
-        alert("تعذر معالجة التسجيل بواسطة الذكاء الاصطناعي: " + err.message);
+        // كتابة سبب الخطأ الدقيق مباشرة على الشاشة
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> ' + err.message;
+        alert("تنبيه: " + err.message);
       }
 
       document.getElementById('lectureTitle').value = "";
@@ -470,7 +474,7 @@
 
 يرجى عدم اختصار الشرح بشكل مخل، واستخراج كافة التفاصيل الصوتية بدقة لخدمة الطالب.`;
 
-      // الإرسال للسيرفر الوسيط Cloudflare
+      // إرسال الطلب إلى سيرفر Cloudflare
       const res = await fetch(PROXY_SERVER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -480,6 +484,15 @@
           audioBase64: base64Data
         })
       });
+
+      if (!res.ok) {
+        let errText = await res.text();
+        try {
+          const errObj = JSON.parse(errText);
+          errText = errObj.error?.message || errObj.message || errText;
+        } catch(e) {}
+        throw new Error(errText || ("خطأ استجابة من الخادم: " + res.status));
+      }
 
       const json = await res.json();
 
@@ -491,7 +504,12 @@
         return json.candidates[0].content.parts[0].text;
       }
 
-      throw new Error("لم يتم استلام نص التلخيص بشكل صحيح من محرك الذكاء الاصطناعي.");
+      // في حال كان سيرفر Cloudflare لا يزال يشغل كود Hello World القديم
+      if (json.message) {
+        throw new Error("سيرفر Cloudflare يحتاج ضغط زر Deploy الأزرق: " + json.message);
+      }
+
+      throw new Error("لم يتم استلام نص التلخيص بشكل صحيح من الذكاء الاصطناعي.");
     }
 
     window.addLectureToUI = function(title, summary, audioSrc) {
