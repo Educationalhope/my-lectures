@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <title>محاضرتي الذكية - الإصدار المحدث | مؤمل نزار</title>
+  <title>محاضرتي الذكية - تفصيل شامل | مؤمل نزار</title>
 
   <!-- Bootstrap & FontAwesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
@@ -110,6 +110,21 @@
       transition: 0.2s;
     }
 
+    /* تنسيق الخانات الجديدة للتلخيص المفصل */
+    .summary-box {
+      background-color: #1e293b;
+      border-right: 4px solid transparent;
+      transition: 0.3s;
+    }
+    .summary-box:hover {
+      background-color: #334155;
+      transform: translateY(-2px);
+    }
+    .box-info { border-right-color: #0dcaf0; }
+    .box-warning { border-right-color: #ffc107; }
+    .box-danger { border-right-color: #ef4444; }
+    .box-success { border-right-color: #10b981; }
+
     .form-control, .form-select {
       background-color: #0f172a;
       border: 1px solid #334155;
@@ -198,7 +213,7 @@
     <div class="container d-flex justify-content-between align-items-center">
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
         <i class="fa-solid fa-graduation-cap text-primary fs-3"></i>
-        <span class="fw-bold fs-4">محاضرتي الذكية <span class="badge bg-success fs-6">V6</span></span>
+        <span class="fw-bold fs-4">محاضرتي الذكية <span class="badge bg-success fs-6">V7 (التفصيل الذكي)</span></span>
       </a>
       <a href="https://t.me/moamel_nazar" target="_blank" class="badge bg-primary px-3 py-2 rounded-pill text-decoration-none">
         <i class="fa-brands fa-telegram me-1"></i> فكرة وتنفيذ الطالب: مؤمل نزار
@@ -206,7 +221,7 @@
     </div>
   </nav>
 
-  <div class="container mb-5" style="max-width: 720px;">
+  <div class="container mb-5" style="max-width: 850px;">
     <!-- كارت التسجيل والرفع -->
     <div class="main-card">
       <div class="d-flex justify-content-between align-items-center mb-3">
@@ -226,13 +241,11 @@
         </li>
       </ul>
 
-      <!-- خانات المادة والعنوان المستقلة -->
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label text-secondary"><i class="fa-solid fa-folder-open me-1"></i> اختر المادة (المجلد)</label>
           <div class="d-flex gap-2">
             <select id="subjectSelect" class="form-select text-light">
-              <!-- يتم إضافة الخيارات برمجياً -->
             </select>
             <button type="button" class="btn btn-success" onclick="addNewSubject()" title="إنشاء مجلد مادة جديد">
               <i class="fa-solid fa-plus"></i>
@@ -251,7 +264,7 @@
             <i class="fa-solid fa-play me-1"></i> بدء التسجيل
           </button>
           <button id="stopBtn" type="button" class="btn btn-danger-custom flex-grow-1" disabled>
-            <i class="fa-solid fa-square me-1"></i> إيقاف وتلخيص
+            <i class="fa-solid fa-square me-1"></i> إيقاف وتلخيص شامل
           </button>
         </div>
       </div>
@@ -263,36 +276,33 @@
           <span id="fileLabel">اضغط هنا لاختيار ملف صوتي (MP3, M4A, WAV...)</span>
         </button>
         <button id="processUploadedBtn" type="button" class="btn btn-primary-custom w-100 mt-3" disabled>
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> رفع وتلخيص الصوت
+          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> رفع واستخراج تفاصيل المحاضرة
         </button>
       </div>
 
       <div class="text-center">
-        <span id="status" class="status-badge"><i class="fa-solid fa-circle-check text-success me-1"></i> النظام جاهز... حدد المجلد وابدأ!</span>
+        <span id="status" class="status-badge"><i class="fa-solid fa-circle-check text-success me-1"></i> النظام جاهز لتحليل المحاضرة وتفصيلها...</span>
       </div>
     </div>
 
-    <!-- كارت الأرشيف مع الخانات (Folders) -->
+    <!-- كارت الأرشيف -->
     <div class="main-card">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold m-0"><i class="fa-solid fa-box-archive text-warning me-2"></i> أرشيف المحاضرات المحفوظة</h4>
         <span class="badge bg-success">يتم الحفظ في جهازك تلقائياً</span>
       </div>
 
-      <!-- مجلدات المواد الدراسية -->
       <div class="mb-3">
         <h6 class="text-secondary small mb-2">مجلدات المواد (اضغط للتصفية):</h6>
         <div id="subjectFilters" class="d-flex flex-wrap gap-2">
-          <!-- ستتم إضافة أزرار الأقسام هنا برمجياً -->
         </div>
       </div>
 
       <div class="mb-3 mt-3">
-        <input type="text" id="searchInput" onkeyup="filterLecturesSearch()" class="form-control" placeholder="🔍 بحث عن محاضرة...">
+        <input type="text" id="searchInput" onkeyup="filterLecturesSearch()" class="form-control" placeholder="🔍 بحث عن محاضرة (بالمحاور، الأسئلة، أو العنوان)...">
       </div>
 
       <div id="lecturesList">
-        <!-- المحاضرات -->
       </div>
     </div>
   </div>
@@ -311,13 +321,11 @@
       return _k1 + _k2 + _k3;
     }
 
-    // --- نظام التخزين والمجلدات ---
     let lecturesData = JSON.parse(localStorage.getItem('lecnote_lectures_data')) || [];
     let subjectsList = JSON.parse(localStorage.getItem('lecnote_subjects_data')) || ['عامة']; 
     let sessionAudio = {}; 
     let currentActiveSubject = 'all';
 
-    // هجرة البيانات القديمة للتأكد من وجود الخانات السابقة
     [...new Set(lecturesData.map(l => l.subject))].forEach(s => {
       if(!subjectsList.includes(s) && s.trim() !== '') {
         subjectsList.push(s);
@@ -331,7 +339,6 @@
       renderLectures('all');
     };
 
-    // إنشاء مادة (مجلد) جديد من قبل الطالب
     function addNewSubject() {
       const newSub = prompt("أدخل اسم المادة (المجلد) الجديد:\nمثال: التشريح، برمجة، شبكات...");
       if (newSub && newSub.trim() !== '') {
@@ -341,10 +348,7 @@
           localStorage.setItem('lecnote_subjects_data', JSON.stringify(subjectsList));
           updateSubjectSelect();
           renderSubjects();
-          
-          // تحديد المجلد الجديد تلقائياً في القائمة المنسدلة
           document.getElementById('subjectSelect').value = cleanName;
-          alert("تم إنشاء مجلد '" + cleanName + "' بنجاح!");
         } else {
           alert("هذه المادة موجودة مسبقاً!");
           document.getElementById('subjectSelect').value = cleanName;
@@ -352,7 +356,6 @@
       }
     }
 
-    // تحديث القائمة المنسدلة لاختيار المادة عند الإضافة
     function updateSubjectSelect() {
       const select = document.getElementById('subjectSelect');
       select.innerHTML = '';
@@ -361,7 +364,6 @@
       });
     }
 
-    // عرض مجلدات الأرشيف (أزرار التصفية)
     function renderSubjects() {
       const filtersDiv = document.getElementById('subjectFilters');
       let html = `<div class="folder-tab ${currentActiveSubject === 'all' ? 'active' : ''}" onclick="renderLectures('all')">
@@ -381,9 +383,28 @@
       filtersDiv.innerHTML = html;
     }
 
+    function getSummaryTextFormat(summary) {
+      if (typeof summary === 'string') return summary;
+      
+      let text = "";
+      if (summary.topics && summary.topics.length > 0) {
+        text += "📌 المحاور الرئيسية:\n" + summary.topics.map(t=>"- "+t).join("\n") + "\n\n";
+      }
+      if (summary.concepts && summary.concepts.length > 0) {
+        text += "🧠 المفاهيم والقوانين:\n" + summary.concepts.map(t=>"- "+t).join("\n") + "\n\n";
+      }
+      if (summary.questions && summary.questions.length > 0) {
+        text += "❓ الأسئلة المتوقعة:\n" + summary.questions.map(t=>"- "+t).join("\n") + "\n\n";
+      }
+      if (summary.notes && summary.notes.length > 0) {
+        text += "💡 ملاحظات هامة:\n" + summary.notes.map(t=>"- "+t).join("\n") + "\n\n";
+      }
+      return text;
+    }
+
     function renderLectures(subjectFilter) {
       currentActiveSubject = subjectFilter;
-      renderSubjects(); // لتحديث لون الزر النشط
+      renderSubjects(); 
 
       const list = document.getElementById('lecturesList');
       list.innerHTML = "";
@@ -397,7 +418,6 @@
         return;
       }
 
-      // عرض الأحدث أولاً
       filtered.sort((a,b) => b.timestamp - a.timestamp).forEach(lec => {
         const card = document.createElement('div');
         card.className = 'lecture-card search-target';
@@ -405,7 +425,54 @@
         
         let audioHTML = sessionAudio[lec.id] 
           ? `<audio controls src="${sessionAudio[lec.id]}" class="mt-3 w-100"></audio>` 
-          : `<p class="text-secondary small mt-3 m-0"><i class="fa-solid fa-info-circle me-1"></i> (الملف الصوتي متاح فقط في وقت الرفع، التلخيص محفوظ بشكل دائم)</p>`;
+          : `<p class="text-secondary small mt-3 m-0"><i class="fa-solid fa-info-circle me-1"></i> (الصوت متاح أثناء التسجيل فقط لتوفير المساحة، التفاصيل محفوظة للأبد)</p>`;
+
+        // Render Summary Blocks or old string
+        let summaryHTML = '';
+        if (typeof lec.summary === 'string') {
+          // القديم
+          summaryHTML = `<div class="text-light small mt-3" style="white-space: pre-line; line-height: 1.7;">${lec.summary}</div>`;
+        } else {
+          // الجديد: الخانات المنفصلة
+          const s = lec.summary;
+          
+          const topicsList = (s.topics||[]).map(x=>`<li class="mb-1">${x}</li>`).join('');
+          const conceptsList = (s.concepts||[]).map(x=>`<li class="mb-1">${x}</li>`).join('');
+          const questionsList = (s.questions||[]).map(x=>`<li class="mb-1">${x}</li>`).join('');
+          const notesList = (s.notes||[]).map(x=>`<li class="mb-1">${x}</li>`).join('');
+
+          summaryHTML = `
+            <div class="row g-3 mt-2">
+              <div class="col-md-6">
+                <div class="p-3 rounded h-100 summary-box box-info">
+                  <h6 class="text-info mb-3 fw-bold border-bottom border-secondary pb-2"><i class="fa-solid fa-list-check me-2"></i>المحاور الرئيسية</h6>
+                  <ul class="small mb-0 text-light ps-3" style="line-height: 1.6;">${topicsList || '<li>لا يوجد</li>'}</ul>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 rounded h-100 summary-box box-warning">
+                  <h6 class="text-warning mb-3 fw-bold border-bottom border-secondary pb-2"><i class="fa-solid fa-brain me-2"></i>المفاهيم والقوانين</h6>
+                  <ul class="small mb-0 text-light ps-3" style="line-height: 1.6;">${conceptsList || '<li>لا يوجد</li>'}</ul>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 rounded h-100 summary-box box-danger">
+                  <h6 class="text-danger mb-3 fw-bold border-bottom border-secondary pb-2"><i class="fa-solid fa-circle-question me-2"></i>الأسئلة المتوقعة (مهم)</h6>
+                  <ul class="small mb-0 text-light ps-3" style="line-height: 1.6;">${questionsList || '<li>لا يوجد</li>'}</ul>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 rounded h-100 summary-box box-success">
+                  <h6 class="text-success mb-3 fw-bold border-bottom border-secondary pb-2"><i class="fa-solid fa-lightbulb me-2"></i>ملاحظات هامة للتركيز</h6>
+                  <ul class="small mb-0 text-light ps-3" style="line-height: 1.6;">${notesList || '<li>لا يوجد</li>'}</ul>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Search text helper (hidden text to make searching work perfectly)
+        const searchHiddenText = typeof lec.summary === 'string' ? lec.summary : JSON.stringify(lec.summary);
 
         card.innerHTML = `
           <div class="d-flex justify-content-between align-items-start mb-2">
@@ -414,20 +481,21 @@
               <h5 class="fw-bold text-light m-0 lecture-title-text">${lec.title}</h5>
             </div>
             <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-outline-info" onclick="copyLecture('${lec.id}')" title="نسخ"><i class="fa-solid fa-copy"></i></button>
-              <button class="btn btn-sm btn-outline-success" onclick="downloadTXT('${lec.id}')" title="تنزيل TXT"><i class="fa-solid fa-download"></i></button>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteLecture('${lec.id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
+              <button class="btn btn-sm btn-outline-info" onclick="copyLecture('${lec.id}')" title="نسخ التفاصيل"><i class="fa-solid fa-copy"></i></button>
+              <button class="btn btn-sm btn-outline-success" onclick="downloadTXT('${lec.id}')" title="تنزيل كملف نصي"><i class="fa-solid fa-download"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteLecture('${lec.id}')" title="حذف المحاضرة"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>
-          <div class="text-light small mt-3 lecture-summary-text" style="white-space: pre-line; line-height: 1.7;">${lec.summary}</div>
+          ${summaryHTML}
           ${audioHTML}
+          <div class="d-none search-data">${searchHiddenText}</div>
         `;
         list.appendChild(card);
       });
     }
 
     function deleteLecture(id) {
-      if (confirm("هل أنت متأكد من حذف هذا التلخيص بشكل نهائي؟")) {
+      if (confirm("هل أنت متأكد من حذف هذه المحاضرة بشكل نهائي؟")) {
         lecturesData = lecturesData.filter(l => l.id !== id);
         localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
         delete sessionAudio[id];
@@ -437,15 +505,25 @@
 
     function copyLecture(id) {
       const lec = lecturesData.find(l => l.id === id);
-      const fullText = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n\n${lec.summary}\n\nتم التلخيص بواسطة: LecNote AI`;
+      const textToCopy = getSummaryTextFormat(lec.summary);
+      const fullText = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n\n${textToCopy}\n\nتم التحليل والتفصيل بواسطة: LecNote AI`;
+      
       navigator.clipboard.writeText(fullText).then(() => {
-        alert("تم نسخ التلخيص بنجاح!");
+        alert("تم نسخ التفاصيل بنجاح!");
+      }).catch(err => {
+        const textArea = document.createElement("textarea");
+        textArea.value = fullText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try { document.execCommand('copy'); alert("تم نسخ التفاصيل بنجاح!"); } catch (err) {}
+        document.body.removeChild(textArea);
       });
     }
 
     function downloadTXT(id) {
       const lec = lecturesData.find(l => l.id === id);
-      const content = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n` + "=".repeat(30) + `\n\n${lec.summary}\n\n` + "=".repeat(30) + `\nفكرة وتنفيذ الطالب: مؤمل نزار`;
+      const textToCopy = getSummaryTextFormat(lec.summary);
+      const content = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n` + "=".repeat(30) + `\n\n${textToCopy}\n\n` + "=".repeat(30) + `\nفكرة وتنفيذ الطالب: مؤمل نزار`;
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -461,7 +539,6 @@
         cards[i].style.display = text.includes(input) ? 'block' : 'none';
       }
     }
-    // ------------------------------------
 
     let mediaRecorder;
     let audioChunks = [];
@@ -510,39 +587,26 @@
       const title = document.getElementById('lectureTitle').value.trim();
       const apiKey = getEmbeddedKey();
 
-      if (!subject) {
-        alert("يرجى إنشاء مجلد مادة أولاً!");
-        return;
-      }
-      
-      if (!title) {
-        alert("يرجى إدخال عنوان المحاضرة!");
-        return;
-      }
-
-      if (!selectedAudioFile) {
-        alert("يرجى اختيار ملف صوتي!");
-        return;
-      }
+      if (!subject) { alert("يرجى إنشاء مجلد مادة أولاً!"); return; }
+      if (!title) { alert("يرجى إدخال عنوان المحاضرة!"); return; }
+      if (!selectedAudioFile) { alert("يرجى اختيار ملف صوتي!"); return; }
 
       const audioUrl = URL.createObjectURL(selectedAudioFile);
 
-      status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري استماع وتلخيص كافة التفاصيل...';
+      status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري التحليل العميق وتفصيل المحاضرة... (قد يستغرق بعض الوقت)';
       try {
-        const summaryText = await summarizeAudioWithGemini(selectedAudioFile, apiKey, subject, title);
-        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص والحفظ التلقائي!';
+        const summaryData = await summarizeAudioWithGeminiJSON(selectedAudioFile, apiKey, subject, title);
+        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم الاستخراج والتفصيل والحفظ بنجاح!';
         
         const newId = 'card-' + Date.now();
         sessionAudio[newId] = audioUrl;
-        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryText, timestamp: Date.now() });
+        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryData, timestamp: Date.now() });
         localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
         
         renderLectures(subject);
-
       } catch (err) {
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> حدث خطأ';
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> حدث خطأ أثناء التحليل';
         alert("تنبيه: " + err.message);
-        return;
       }
 
       document.getElementById('lectureTitle').value = "";
@@ -556,57 +620,38 @@
       const subject = document.getElementById('subjectSelect').value;
       const title = document.getElementById('lectureTitle').value.trim();
       
-      if (!subject) {
-        alert("يرجى إنشاء مجلد مادة أولاً!");
-        return;
-      }
-      
-      if (!title) {
-        alert("يرجى إدخال عنوان المحاضرة أولاً!");
-        return;
-      }
+      if (!subject) { alert("يرجى إنشاء مجلد مادة أولاً!"); return; }
+      if (!title) { alert("يرجى إدخال عنوان المحاضرة أولاً!"); return; }
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-warning me-1"></i> جاري طلب إذن الميكروفون...';
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("المتصفح لا يدعم الميكروفون.");
-        return;
+        alert("المتصفح لا يدعم الميكروفون."); return;
       }
 
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(function(stream) {
-          try {
-            mediaRecorder = new MediaRecorder(stream);
-          } catch (err) {
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
-          }
+          try { mediaRecorder = new MediaRecorder(stream); } 
+          catch (err) { mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/mp4' }); }
 
           audioChunks = [];
           recordingStartTime = Date.now();
-
-          mediaRecorder.ondataavailable = function(event) {
-            if (event.data && event.data.size > 0) audioChunks.push(event.data);
-          };
-
+          mediaRecorder.ondataavailable = function(event) { if (event.data && event.data.size > 0) audioChunks.push(event.data); };
           mediaRecorder.onstop = processAudioAndSave;
-
           mediaRecorder.start(500);
+          
           startBtn.disabled = true;
           stopBtn.disabled = false;
-          status.innerHTML = '<i class="fa-solid fa-beat fa-microphone text-danger me-1"></i> 🔴 جاري تسجيل المحاضرة الآن...';
+          status.innerHTML = '<i class="fa-solid fa-beat fa-microphone text-danger me-1"></i> 🔴 جاري تسجيل المحاضرة... (الوقت مفتوح حسب حجم الملف)';
         })
-        .catch(function(err) {
-          alert("تم حظر الميكروفون!");
-        });
+        .catch(function(err) { alert("تم حظر الميكروفون!"); });
     };
 
     stopBtn.onclick = function(e) {
       if (e) e.preventDefault();
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
-        if (mediaRecorder.stream) {
-          mediaRecorder.stream.getTracks().forEach(function(track) { track.stop(); });
-        }
+        if (mediaRecorder.stream) { mediaRecorder.stream.getTracks().forEach(track => track.stop()); }
         startBtn.disabled = false;
         stopBtn.disabled = true;
       }
@@ -614,12 +659,9 @@
 
     async function processAudioAndSave() {
       const duration = (Date.now() - recordingStartTime) / 1000;
-      if (duration < 3 || audioChunks.length === 0) {
-        alert("التسجيل قصير جداً!");
-        return;
-      }
+      if (duration < 3 || audioChunks.length === 0) { alert("التسجيل قصير جداً!"); return; }
 
-      status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري المعالجة...';
+      status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري استخراج التفاصيل وتكوين الخانات...';
 
       const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -628,25 +670,23 @@
       const apiKey = getEmbeddedKey();
 
       try {
-        const summaryText = await summarizeAudioWithGemini(audioBlob, apiKey, subject, title);
-        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص والحفظ بنجاح!';
+        const summaryData = await summarizeAudioWithGeminiJSON(audioBlob, apiKey, subject, title);
+        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التفصيل والحفظ بنجاح!';
         
         const newId = 'card-' + Date.now();
         sessionAudio[newId] = audioUrl;
-        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryText, timestamp: Date.now() });
+        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryData, timestamp: Date.now() });
         localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
         
         renderLectures(subject);
-
       } catch (err) {
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> خطأ في التلخيص';
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> خطأ في استخراج التفاصيل';
         alert("تنبيه: " + err.message);
       }
-
       document.getElementById('lectureTitle').value = "";
     }
 
-    async function summarizeAudioWithGemini(fileOrBlob, apiKey, subject, title) {
+    async function summarizeAudioWithGeminiJSON(fileOrBlob, apiKey, subject, title) {
       const reader = new FileReader();
       const base64Promise = new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -658,24 +698,28 @@
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
-      const promptText = `أنت أستاذ ومساعد دراسي. لخص هذه المحاضرة الصوتية وهي لمادة [${subject}] وعنوان المحاضرة [${title}] باللغة العربية بدقة عالية:
-1. المحاور الرئيسية
-2. المفاهيم والقوانين
-3. الأسئلة المتوقعة
-4. ملاحظات مهمة.`;
+      const promptText = `أنت أستاذ جامعي وخبير في تبسيط المعلومات. قم بتحليل وتلخيص هذه المحاضرة الصوتية (المادة: ${subject}، العنوان: ${title}) بدقة عالية واحترافية.
+يجب إرجاع الرد بصيغة JSON صالح (Valid JSON) حصراً، يحتوي على المفاتيح الأربعة التالية فقط بدون أي نصوص أو علامات أخرى:
+{
+  "topics": ["نقطة 1 تفصيلية هنا", "نقطة 2 هنا"],
+  "concepts": ["المفهوم الأول مع تعريفه", "القانون الثاني مع شرحه"],
+  "questions": ["س 1: ...؟ ج: ...", "س 2: ...؟ ج: ..."],
+  "notes": ["ملاحظة مهمة 1", "ملاحظة مهمة 2 للتركيز عليها"]
+}
+اكتب باللغة العربية الواضحة، وإذا لم تتوفر معلومات لقسم معين، اترك المصفوفة فارغة []. لا تضف أي نص خارج الـ JSON.`;
 
       const requestBody = {
         contents: [{
           parts: [
             { text: promptText },
             {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Data
-              }
+              inline_data: { mime_type: mimeType, data: base64Data }
             }
           ]
-        }]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json"
+        }
       };
 
       const response = await fetch(endpoint, {
@@ -694,7 +738,18 @@
         throw new Error('لم يتم التوصل لاستجابة');
       }
 
-      return data.candidates[0].content.parts[0].text;
+      let rawText = data.candidates[0].content.parts[0].text;
+      try {
+        let cleanJson = rawText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+        return JSON.parse(cleanJson);
+      } catch (e) {
+        return {
+          topics: ["(تعذر تقسيم المحاور بشكل آلي)"],
+          concepts: [],
+          questions: [],
+          notes: [rawText]
+        };
+      }
     }
   </script>
 </body>
