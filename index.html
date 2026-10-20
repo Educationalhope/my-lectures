@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- منع الكاش نهائياً لضمان تحديث المتصفح -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -111,7 +110,7 @@
       transition: 0.2s;
     }
 
-    .form-control {
+    .form-control, .form-select {
       background-color: #0f172a;
       border: 1px solid #334155;
       color: var(--text-color);
@@ -119,7 +118,7 @@
       padding: 12px;
     }
 
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
       background-color: #0f172a;
       color: var(--text-color);
       border-color: var(--primary-color);
@@ -138,6 +137,40 @@
       color: #38bdf8;
       background: transparent;
       border-bottom: 2px solid #38bdf8;
+    }
+    
+    .folder-tab {
+      cursor: pointer;
+      padding: 8px 15px;
+      border-radius: 20px;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .folder-tab:hover {
+      background-color: #334155;
+      color: white;
+    }
+    
+    .folder-tab.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .folder-tab.add-new {
+      border: 1px dashed #10b981;
+      color: #10b981;
+      background: transparent;
+    }
+    
+    .folder-tab.add-new:hover {
+      background: rgba(16, 185, 129, 0.1);
     }
 
     audio {
@@ -165,7 +198,7 @@
     <div class="container d-flex justify-content-between align-items-center">
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
         <i class="fa-solid fa-graduation-cap text-primary fs-3"></i>
-        <span class="fw-bold fs-4">محاضرتي - الإصدار المحدث <span class="badge bg-success fs-6">V4</span></span>
+        <span class="fw-bold fs-4">محاضرتي الذكية <span class="badge bg-success fs-6">V6</span></span>
       </a>
       <a href="https://t.me/moamel_nazar" target="_blank" class="badge bg-primary px-3 py-2 rounded-pill text-decoration-none">
         <i class="fa-brands fa-telegram me-1"></i> فكرة وتنفيذ الطالب: مؤمل نزار
@@ -193,9 +226,23 @@
         </li>
       </ul>
 
-      <div class="mb-3">
-        <label class="form-label text-secondary">اسم المادة / عنوان المحاضرة</label>
-        <input type="text" id="lectureTitle" class="form-control" placeholder="مثال: اللغة العربية - قواعد وشعر">
+      <!-- خانات المادة والعنوان المستقلة -->
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label text-secondary"><i class="fa-solid fa-folder-open me-1"></i> اختر المادة (المجلد)</label>
+          <div class="d-flex gap-2">
+            <select id="subjectSelect" class="form-select text-light">
+              <!-- يتم إضافة الخيارات برمجياً -->
+            </select>
+            <button type="button" class="btn btn-success" onclick="addNewSubject()" title="إنشاء مجلد مادة جديد">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label text-secondary"><i class="fa-solid fa-pen me-1"></i> عنوان المحاضرة</label>
+          <input type="text" id="lectureTitle" class="form-control" placeholder="مثال: المحاضرة الأولى">
+        </div>
       </div>
 
       <div id="record-panel">
@@ -216,21 +263,36 @@
           <span id="fileLabel">اضغط هنا لاختيار ملف صوتي (MP3, M4A, WAV...)</span>
         </button>
         <button id="processUploadedBtn" type="button" class="btn btn-primary-custom w-100 mt-3" disabled>
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> رفع وتلخيص الصوت الشامل
+          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> رفع وتلخيص الصوت
         </button>
       </div>
 
       <div class="text-center">
-        <span id="status" class="status-badge"><i class="fa-solid fa-circle-check text-success me-1"></i> النظام المحدث جاهز للتلخيص...</span>
+        <span id="status" class="status-badge"><i class="fa-solid fa-circle-check text-success me-1"></i> النظام جاهز... حدد المجلد وابدأ!</span>
       </div>
     </div>
 
+    <!-- كارت الأرشيف مع الخانات (Folders) -->
     <div class="main-card">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold m-0"><i class="fa-solid fa-box-archive text-warning me-2"></i> الأرشيف</h4>
+        <h4 class="fw-bold m-0"><i class="fa-solid fa-box-archive text-warning me-2"></i> أرشيف المحاضرات المحفوظة</h4>
+        <span class="badge bg-success">يتم الحفظ في جهازك تلقائياً</span>
       </div>
+
+      <!-- مجلدات المواد الدراسية -->
+      <div class="mb-3">
+        <h6 class="text-secondary small mb-2">مجلدات المواد (اضغط للتصفية):</h6>
+        <div id="subjectFilters" class="d-flex flex-wrap gap-2">
+          <!-- ستتم إضافة أزرار الأقسام هنا برمجياً -->
+        </div>
+      </div>
+
+      <div class="mb-3 mt-3">
+        <input type="text" id="searchInput" onkeyup="filterLecturesSearch()" class="form-control" placeholder="🔍 بحث عن محاضرة...">
+      </div>
+
       <div id="lecturesList">
-        <p class="text-muted text-center py-3">لا توجد محاضرات محفوظة حتى الآن.</p>
+        <!-- المحاضرات -->
       </div>
     </div>
   </div>
@@ -248,6 +310,158 @@
       const _k3 = "pmfwCCCOlzU5Nqob92lNxEQ";
       return _k1 + _k2 + _k3;
     }
+
+    // --- نظام التخزين والمجلدات ---
+    let lecturesData = JSON.parse(localStorage.getItem('lecnote_lectures_data')) || [];
+    let subjectsList = JSON.parse(localStorage.getItem('lecnote_subjects_data')) || ['عامة']; 
+    let sessionAudio = {}; 
+    let currentActiveSubject = 'all';
+
+    // هجرة البيانات القديمة للتأكد من وجود الخانات السابقة
+    [...new Set(lecturesData.map(l => l.subject))].forEach(s => {
+      if(!subjectsList.includes(s) && s.trim() !== '') {
+        subjectsList.push(s);
+      }
+    });
+    localStorage.setItem('lecnote_subjects_data', JSON.stringify(subjectsList));
+
+    window.onload = function() {
+      updateSubjectSelect();
+      renderSubjects();
+      renderLectures('all');
+    };
+
+    // إنشاء مادة (مجلد) جديد من قبل الطالب
+    function addNewSubject() {
+      const newSub = prompt("أدخل اسم المادة (المجلد) الجديد:\nمثال: التشريح، برمجة، شبكات...");
+      if (newSub && newSub.trim() !== '') {
+        const cleanName = newSub.trim();
+        if (!subjectsList.includes(cleanName)) {
+          subjectsList.push(cleanName);
+          localStorage.setItem('lecnote_subjects_data', JSON.stringify(subjectsList));
+          updateSubjectSelect();
+          renderSubjects();
+          
+          // تحديد المجلد الجديد تلقائياً في القائمة المنسدلة
+          document.getElementById('subjectSelect').value = cleanName;
+          alert("تم إنشاء مجلد '" + cleanName + "' بنجاح!");
+        } else {
+          alert("هذه المادة موجودة مسبقاً!");
+          document.getElementById('subjectSelect').value = cleanName;
+        }
+      }
+    }
+
+    // تحديث القائمة المنسدلة لاختيار المادة عند الإضافة
+    function updateSubjectSelect() {
+      const select = document.getElementById('subjectSelect');
+      select.innerHTML = '';
+      subjectsList.forEach(sub => {
+        select.innerHTML += `<option value="${sub}">${sub}</option>`;
+      });
+    }
+
+    // عرض مجلدات الأرشيف (أزرار التصفية)
+    function renderSubjects() {
+      const filtersDiv = document.getElementById('subjectFilters');
+      let html = `<div class="folder-tab ${currentActiveSubject === 'all' ? 'active' : ''}" onclick="renderLectures('all')">
+                    <i class="fa-solid fa-border-all"></i> الكل
+                  </div>`;
+      
+      subjectsList.forEach(sub => {
+        html += `<div class="folder-tab ${currentActiveSubject === sub ? 'active' : ''}" onclick="renderLectures('${sub}')">
+                    <i class="fa-solid fa-folder"></i> ${sub}
+                 </div>`;
+      });
+
+      html += `<div class="folder-tab add-new" onclick="addNewSubject()" title="إنشاء مجلد جديد">
+                  <i class="fa-solid fa-plus"></i> إضافة مجلد
+               </div>`;
+
+      filtersDiv.innerHTML = html;
+    }
+
+    function renderLectures(subjectFilter) {
+      currentActiveSubject = subjectFilter;
+      renderSubjects(); // لتحديث لون الزر النشط
+
+      const list = document.getElementById('lecturesList');
+      list.innerHTML = "";
+      
+      const filtered = subjectFilter === 'all' 
+        ? lecturesData 
+        : lecturesData.filter(l => l.subject === subjectFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<p class="text-muted text-center py-4"><i class="fa-solid fa-folder-open fs-1 mb-3 text-secondary d-block"></i>المجلد فارغ. ابدأ بتسجيل أو رفع محاضرة لإضافتها هنا.</p>';
+        return;
+      }
+
+      // عرض الأحدث أولاً
+      filtered.sort((a,b) => b.timestamp - a.timestamp).forEach(lec => {
+        const card = document.createElement('div');
+        card.className = 'lecture-card search-target';
+        card.id = lec.id;
+        
+        let audioHTML = sessionAudio[lec.id] 
+          ? `<audio controls src="${sessionAudio[lec.id]}" class="mt-3 w-100"></audio>` 
+          : `<p class="text-secondary small mt-3 m-0"><i class="fa-solid fa-info-circle me-1"></i> (الملف الصوتي متاح فقط في وقت الرفع، التلخيص محفوظ بشكل دائم)</p>`;
+
+        card.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-primary mb-2"><i class="fa-solid fa-folder me-1"></i>${lec.subject}</span>
+              <h5 class="fw-bold text-light m-0 lecture-title-text">${lec.title}</h5>
+            </div>
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-info" onclick="copyLecture('${lec.id}')" title="نسخ"><i class="fa-solid fa-copy"></i></button>
+              <button class="btn btn-sm btn-outline-success" onclick="downloadTXT('${lec.id}')" title="تنزيل TXT"><i class="fa-solid fa-download"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteLecture('${lec.id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="text-light small mt-3 lecture-summary-text" style="white-space: pre-line; line-height: 1.7;">${lec.summary}</div>
+          ${audioHTML}
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function deleteLecture(id) {
+      if (confirm("هل أنت متأكد من حذف هذا التلخيص بشكل نهائي؟")) {
+        lecturesData = lecturesData.filter(l => l.id !== id);
+        localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
+        delete sessionAudio[id];
+        renderLectures(currentActiveSubject);
+      }
+    }
+
+    function copyLecture(id) {
+      const lec = lecturesData.find(l => l.id === id);
+      const fullText = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n\n${lec.summary}\n\nتم التلخيص بواسطة: LecNote AI`;
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert("تم نسخ التلخيص بنجاح!");
+      });
+    }
+
+    function downloadTXT(id) {
+      const lec = lecturesData.find(l => l.id === id);
+      const content = `المادة: ${lec.subject}\nالمحاضرة: ${lec.title}\n` + "=".repeat(30) + `\n\n${lec.summary}\n\n` + "=".repeat(30) + `\nفكرة وتنفيذ الطالب: مؤمل نزار`;
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = lec.subject + '_' + lec.title + '.txt';
+      a.click();
+    }
+
+    function filterLecturesSearch() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.getElementsByClassName('search-target');
+      for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText.toLowerCase();
+        cards[i].style.display = text.includes(input) ? 'block' : 'none';
+      }
+    }
+    // ------------------------------------
 
     let mediaRecorder;
     let audioChunks = [];
@@ -292,16 +506,22 @@
     };
 
     processUploadedBtn.onclick = async function() {
+      const subject = document.getElementById('subjectSelect').value;
       const title = document.getElementById('lectureTitle').value.trim();
       const apiKey = getEmbeddedKey();
 
+      if (!subject) {
+        alert("يرجى إنشاء مجلد مادة أولاً!");
+        return;
+      }
+      
       if (!title) {
         alert("يرجى إدخال عنوان المحاضرة!");
         return;
       }
 
       if (!selectedAudioFile) {
-        alert("يرجى اختيار ملف صوتي أولاً!");
+        alert("يرجى اختيار ملف صوتي!");
         return;
       }
 
@@ -309,11 +529,18 @@
 
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> جاري استماع وتلخيص كافة التفاصيل...';
       try {
-        const summaryText = await summarizeAudioWithGemini(selectedAudioFile, apiKey, title);
-        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص بنجاح!';
-        addLectureToUI(title, summaryText, audioUrl);
+        const summaryText = await summarizeAudioWithGemini(selectedAudioFile, apiKey, subject, title);
+        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص والحفظ التلقائي!';
+        
+        const newId = 'card-' + Date.now();
+        sessionAudio[newId] = audioUrl;
+        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryText, timestamp: Date.now() });
+        localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
+        
+        renderLectures(subject);
+
       } catch (err) {
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> حدث خطأ أثناء الاتصال';
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> حدث خطأ';
         alert("تنبيه: " + err.message);
         return;
       }
@@ -326,7 +553,14 @@
 
     startBtn.onclick = function(e) {
       if (e) e.preventDefault();
+      const subject = document.getElementById('subjectSelect').value;
       const title = document.getElementById('lectureTitle').value.trim();
+      
+      if (!subject) {
+        alert("يرجى إنشاء مجلد مادة أولاً!");
+        return;
+      }
+      
       if (!title) {
         alert("يرجى إدخال عنوان المحاضرة أولاً!");
         return;
@@ -389,13 +623,21 @@
 
       const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
       const audioUrl = URL.createObjectURL(audioBlob);
-      const title = document.getElementById('lectureTitle').value;
+      const subject = document.getElementById('subjectSelect').value;
+      const title = document.getElementById('lectureTitle').value.trim();
       const apiKey = getEmbeddedKey();
 
       try {
-        const summaryText = await summarizeAudioWithGemini(audioBlob, apiKey, title);
-        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص بنجاح!';
-        addLectureToUI(title, summaryText, audioUrl);
+        const summaryText = await summarizeAudioWithGemini(audioBlob, apiKey, subject, title);
+        status.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> تم التلخيص والحفظ بنجاح!';
+        
+        const newId = 'card-' + Date.now();
+        sessionAudio[newId] = audioUrl;
+        lecturesData.push({ id: newId, subject: subject, title: title, summary: summaryText, timestamp: Date.now() });
+        localStorage.setItem('lecnote_lectures_data', JSON.stringify(lecturesData));
+        
+        renderLectures(subject);
+
       } catch (err) {
         status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-danger me-1"></i> خطأ في التلخيص';
         alert("تنبيه: " + err.message);
@@ -404,7 +646,7 @@
       document.getElementById('lectureTitle').value = "";
     }
 
-    async function summarizeAudioWithGemini(fileOrBlob, apiKey, title) {
+    async function summarizeAudioWithGemini(fileOrBlob, apiKey, subject, title) {
       const reader = new FileReader();
       const base64Promise = new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -414,10 +656,9 @@
       const base64Data = await base64Promise;
       const mimeType = fileOrBlob.type || 'audio/mp4';
 
-      // التحديث النهائي والجذري حسب تنبيه جوجل: استخدام موديل gemini-3.8-flash حصراً
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
-      const promptText = `أنت أستاذ ومساعد دراسي. لخص المحاضرة [${title}] باللغة العربية بدقة:
+      const promptText = `أنت أستاذ ومساعد دراسي. لخص هذه المحاضرة الصوتية وهي لمادة [${subject}] وعنوان المحاضرة [${title}] باللغة العربية بدقة عالية:
 1. المحاور الرئيسية
 2. المفاهيم والقوانين
 3. الأسئلة المتوقعة
@@ -454,21 +695,6 @@
       }
 
       return data.candidates[0].content.parts[0].text;
-    }
-
-    function addLectureToUI(title, summary, audioSrc) {
-      const list = document.getElementById('lecturesList');
-      if (list.querySelector('p')) list.innerHTML = "";
-      const cardId = 'card-' + Date.now();
-      const card = document.createElement('div');
-      card.className = 'lecture-card';
-      card.id = cardId;
-      card.innerHTML = `
-        <h5 class="fw-bold text-primary mb-3">📌 ${title}</h5>
-        <div class="text-light small" style="white-space: pre-line; line-height: 1.7;">${summary}</div>
-        <audio controls src="${audioSrc}" class="mt-3 w-100"></audio>
-      `;
-      list.prepend(card);
     }
   </script>
 </body>
